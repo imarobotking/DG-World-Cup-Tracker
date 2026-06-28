@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Digital Glen FIFA World Cup 2026 Tracker</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <div class="trophy">🏆</div>
+  <div>
+    <h1>The Digital Glen World Cup 2026 Tracker</h1>
+    <p>USA · Canada · Mexico &nbsp;|&nbsp; June 11 – July 19, 2026</p>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showPanel('groups')">Groups</button>
+  <button class="tab" onclick="showPanel('bracket')">Bracket</button>
+  <button class="tab" onclick="showPanel('stats')">Top Scorers</button>
+</div>
+
+<div class="content">
+
+  <!-- GROUPS PANEL -->
+  <div class="panel active" id="panel-groups">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-bar q"></div> Qualified (Top 2)</div>
+      <div class="legend-item"><div class="legend-bar t"></div> 3rd place (potential)</div>
+    </div>
+    <div class="groups-grid" id="groups-grid"></div>
+
+    <!-- THIRD PLACE TABLE -->
+    <div class="third-place-section">
+      <div class="third-place-header">
+        <span class="third-place-title">Best 3rd Place Teams</span>
+        <span class="third-place-sub">Top 8 advance to Round of 32</span>
+      </div>
+      <table class="standings third-place-standings">
+        <thead>
+          <tr>
+            <th style="width:30px">#</th>
+            <th style="text-align:left;padding-left:12px">Team</th>
+            <th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th>
+            <th title="Conduct Score">CS</th>
+            <th style="color:var(--gold)">PTS</th>
+            
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="third-place-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BRACKET PANEL -->
+  <div class="panel" id="panel-bracket">
+    <div class="bracket-scroll-wrap">
+      <div id="bracket-tree"></div>
+    </div>
+    <p class="bracket-hint">Teams fill in automatically — click any match to enter the score</p>
+  </div>
+
+  <!-- STATS PANEL -->
+  <div class="panel" id="panel-stats">
+    <div class="stats-grid" id="stats-grid"></div>
+    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold);margin-bottom:14px;">Top Scorers</h3>
+    <table class="scorers-table" id="scorers-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Player</th><th>Team</th>
+          <th style="text-align:center">Goals</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="scorers-body"></tbody>
+    </table>
+    <div class="add-scorer-form">
+      <input class="form-input" id="scorer-name" placeholder="Player name" />
+      <input class="form-input" id="scorer-team" placeholder="Team" />
+      <input class="form-input form-input-sm" id="scorer-goals" type="number" min="0" placeholder="⚽" />
+      <button class="btn btn-primary" style="flex:0 0 auto;padding:8px 16px;" onclick="addScorer()">Add</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- KNOCKOUT MODAL -->
+<div class="modal-overlay" id="ko-modal-overlay" onclick="closeKOModalOverlay(event)">
+  <div class="modal ko-modal">
+    <h3 id="ko-modal-title">Enter Match</h3>
+
+    <!-- Teams (read-only, auto-filled from groups / previous round) -->
+    <div class="ko-teams-head">
+      <div class="ko-team-label" id="ko-team1-label">Team 1</div>
+      <div class="ko-vs">vs</div>
+      <div class="ko-team-label ko-team-label-right" id="ko-team2-label">Team 2</div>
+    </div>
+
+    <!-- 90 minutes -->
+    <div class="ko-stage-row">
+      <span class="ko-stage-name">90 mins</span>
+      <div class="ko-score-row">
+        <input class="modal-score-input" id="ko-score1" type="number" min="0" placeholder="0"
+          oninput="updateModalStages()" />
+        <span class="modal-sep">—</span>
+        <input class="modal-score-input" id="ko-score2" type="number" min="0" placeholder="0"
+          oninput="updateModalStages()" />
+      </div>
+    </div>
+
+    <!-- Extra time (hidden until 90min is a draw) -->
+    <div class="ko-stage-row ko-stage-extra" id="ko-et-row" style="display:none">
+      <span class="ko-stage-name">Extra time</span>
+      <div class="ko-score-row">
+        <input class="modal-score-input" id="ko-et1" type="number" min="0" placeholder="0"
+          oninput="updateModalStages()" />
+        <span class="modal-sep">—</span>
+        <input class="modal-score-input" id="ko-et2" type="number" min="0" placeholder="0"
+          oninput="updateModalStages()" />
+      </div>
+    </div>
+
+    <!-- Penalties (hidden until extra time is a draw) -->
+    <div class="ko-stage-row ko-stage-extra ko-stage-pens" id="ko-pen-row" style="display:none">
+      <span class="ko-stage-name">Penalties</span>
+      <div class="ko-score-row">
+        <input class="modal-score-input" id="ko-pen1" type="number" min="0" placeholder="0" />
+        <span class="modal-sep">—</span>
+        <input class="modal-score-input" id="ko-pen2" type="number" min="0" placeholder="0" />
+      </div>
+    </div>
+
+    <div class="modal-buttons" style="margin-top:22px">
+      <button class="btn btn-secondary" onclick="closeKOModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="clearKOResult()">Clear</button>
+      <button class="btn btn-primary" onclick="saveKOResult()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Saved!</div>
+
+<script src="script.js"></script>
+</body>
+</html>
